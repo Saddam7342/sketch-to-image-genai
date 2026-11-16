@@ -1,6 +1,6 @@
 # Bringing Sketches to Life: Sketch-to-Image with Stable Diffusion + ControlNet
 
-*Author: Hina. Individual project for the course module "Generative AI", Session 2.*
+*Author: Hina Kanwal (Student ID 32520481). Individual project for the course module "Generative AI", Session 2.*
 
 A configurable pipeline that turns rough hand-drawn sketches into realistic or stylised images while
 preserving the sketch's structure, together with a **quantitative evaluation** of how well that

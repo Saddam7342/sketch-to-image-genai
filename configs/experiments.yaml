@@ -1,0 +1,81 @@
+# Experiment definitions for the sketch-to-image study.
+# Every experiment changes ONE factor (or a 2-D grid for E5) relative to `defaults`,
+# so its effect can be read directly from the grid and the metrics CSV.
+# Approximate cost on a Kaggle T4 (SD1.5, 512 px, fp16): ~4-6 s per image.
+
+defaults:
+  base: sd15
+  control: scribble
+  style: photoreal
+  preprocess: clean
+  steps: 30
+  guidance_scale: 7.5
+  cond_scale: 1.0
+  control_start: 0.0
+  control_end: 1.0
+  scheduler: unipc
+
+preprocess:            # CleanConfig in src/sketch2image/preprocess.py
+  size: 512
+  c: 12
+  min_component_px: 30
+
+# sketch file stem -> subject description (the style preset is appended to it)
+sketches:
+  01_futuristic_tower: "a futuristic skyscraper with a twisted glass and steel facade, two smaller towers connected by a sky bridge, small trees on a city plaza"
+  02_robot_character: "a friendly small robot character waving one hand, round helmet head with a glowing visor and two eyes, round chest light, metal body"
+  03_hover_car: "a sleek futuristic hover car floating above the road, glass canopy, glowing blue hover pads under the body"
+  04_desk_lamp: "an articulated desk lamp on a wooden desk, conical metal shade, spring-loaded arm, round heavy base, warm light"
+  05_floating_island: "a floating rock island in the sky with a small wooden cabin, pine trees and a waterfall pouring off the edge, clouds and birds"
+
+experiments:
+  E1_control_type:
+    description: "Which ControlNet / control representation preserves the sketch best? 'none' = text-only baseline."
+    sweep: {control: [none, scribble, lineart, softedge, canny]}
+    seeds: [1, 2]
+
+  E1b_learned_annotators:
+    description: "Learned annotators (controlnet_aux PiDiNet / Lineart) instead of OpenCV maps. Optional, needs controlnet_aux."
+    sweep: {control: [softedge_aux, lineart_aux]}
+    seeds: [1, 2]
+
+  E2_cond_scale:
+    description: "ControlNet conditioning scale: sketch adherence vs. creative freedom."
+    sweep: {cond_scale: [0.2, 0.4, 0.6, 0.8, 1.0, 1.3, 1.6]}
+    seeds: [1, 2]
+
+  E3_control_window:
+    description: "During which part of the denoising trajectory is ControlNet active?"
+    sweep: {control_window: [[0.0, 1.0], [0.0, 0.6], [0.0, 0.3], [0.3, 1.0]]}
+    seeds: [1, 2]
+
+  E4_style:
+    description: "Same sketch, different text-prompt styles."
+    sweep: {style: [photoreal, concept_art, watercolor, clay, cyberpunk]}
+    seeds: [1]
+
+  E5_cfg_steps:
+    description: "Classifier-free guidance scale x number of denoising steps."
+    sweep: {guidance_scale: [3.0, 7.5, 12.0], steps: [15, 30, 50]}
+    seeds: [1]
+
+  E6_lcm:
+    description: "LCM-LoRA few-step sampling (makes CPU inference feasible)."
+    overrides: {lcm: true, guidance_scale: 1.5}
+    sweep: {steps: [2, 4, 8]}
+    seeds: [1]
+
+  E7_seeds:
+    description: "Seed variance with fixed settings."
+    seeds: [1, 2, 3, 4, 5, 6]
+
+  E8_preprocess:
+    description: "Raw scan vs. cleaned sketch as control input."
+    sweep: {preprocess: [raw, clean], control: [scribble, lineart]}
+    seeds: [1]
+
+  E9_sdxl:
+    description: "SDXL + xinsir scribble ControlNet (1024 px) vs. SD1.5."
+    overrides: {base: sdxl, steps: 30, guidance_scale: 6.0}
+    sweep: {cond_scale: [0.6, 1.0]}
+    seeds: [1]

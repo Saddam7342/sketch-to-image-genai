@@ -1,0 +1,15 @@
+# PyTorch is NOT listed: install it for your platform from https://pytorch.org
+# (Kaggle and Colab already ship a CUDA build of torch; do not reinstall it there).
+diffusers==0.43.0
+transformers>=4.56,<6
+accelerate>=1.0
+peft>=0.17            # needed by diffusers to load LoRA weights (LCM-LoRA)
+safetensors
+opencv-python-headless>=4.8
+scikit-image>=0.21
+numpy
+Pillow>=10.1
+PyYAML
+pandas
+matplotlib
+tabulate              # Markdown tables in scripts/analyze.py

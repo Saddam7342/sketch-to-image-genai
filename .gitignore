@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+outputs/
+results_smoke/
+*.zip
+
+# Individual generated images are large; the repo keeps the grids, CSVs,
+# control maps, analysis plots and a curated showcase instead.
+results/E*/*/
+!results/showcase/
+
+# local / not part of the submission
+description.txt
+*.egg-info/

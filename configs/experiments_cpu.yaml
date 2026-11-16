@@ -1,0 +1,69 @@
+# CPU-only study (no GPU available): same research questions as experiments.yaml, sized for a
+# 4-thread laptop CPU. Default sampler is LCM-LoRA (few steps) instead of 30-step UniPC; E5 adds
+# a small standard-sampler reference so the quality cost of LCM can be measured.
+# Identical configurations across experiments are generated once and reused.
+
+defaults:
+  base: sd15
+  control: scribble
+  style: photoreal
+  preprocess: clean
+  lcm: true
+  steps: 6
+  guidance_scale: 1.5
+  cond_scale: 1.0
+  control_start: 0.0
+  control_end: 1.0
+  scheduler: unipc
+
+preprocess:
+  size: 512
+  c: 12
+  min_component_px: 30
+
+sketches:
+  01_futuristic_tower: "a futuristic skyscraper with a twisted glass and steel facade, two smaller towers connected by a sky bridge, small trees on a city plaza"
+  02_robot_character: "a friendly small robot character waving one hand, round helmet head with a glowing visor and two eyes, round chest light, metal body"
+  03_hover_car: "a sleek futuristic hover car floating above the road, glass canopy, glowing blue hover pads under the body"
+  04_desk_lamp: "an articulated desk lamp on a wooden desk, conical metal shade, spring-loaded arm, round heavy base, warm light"
+  05_floating_island: "a floating rock island in the sky with a small wooden cabin, pine trees and a waterfall pouring off the edge, clouds and birds"
+
+experiments:
+  E1_control_type:
+    description: "Control representation; 'none' = text-only baseline without ControlNet."
+    sweep: {control: [none, scribble, lineart, softedge, canny]}
+    seeds: [1]
+
+  E2_cond_scale:
+    description: "ControlNet conditioning scale: sketch adherence vs. creative freedom."
+    sweep: {cond_scale: [0.3, 0.6, 1.0, 1.3, 1.6]}
+    seeds: [1]
+
+  E3_control_window:
+    description: "Part of the denoising trajectory during which ControlNet is active."
+    sweep: {control_window: [[0.0, 1.0], [0.0, 0.5], [0.5, 1.0]]}
+    seeds: [1]
+
+  E4_style:
+    description: "Same sketch, different text-prompt styles."
+    sweep: {style: [photoreal, concept_art, watercolor, clay, cyberpunk]}
+    seeds: [1]
+
+  E5_sampler:
+    description: "LCM-LoRA step count vs. a standard 20-step UniPC sampler with CFG 7.5."
+    sweep: {steps: [2, 4, 6, 8]}
+    seeds: [1]
+
+  E5b_standard_sampler:
+    description: "Reference: standard sampling (no LCM), 20 steps, CFG 7.5."
+    overrides: {lcm: false, steps: 20, guidance_scale: 7.5}
+    seeds: [1]
+
+  E7_seeds:
+    description: "Seed variance with fixed settings."
+    seeds: [1, 2, 3]
+
+  E8_preprocess:
+    description: "Raw scan vs. cleaned sketch as control input."
+    sweep: {preprocess: [raw, clean]}
+    seeds: [1]

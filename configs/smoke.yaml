@@ -1,0 +1,22 @@
+# Fast end-to-end test of every code path on CPU, using tiny random-weight models.
+# The images are noise; this only checks that the pipeline, metrics and grids run.
+defaults:
+  base: tiny
+  control: scribble
+  style: photoreal
+  steps: 2
+  guidance_scale: 7.5
+  cond_scale: 1.0
+  scheduler: unipc
+preprocess:
+  size: 64
+  min_component_px: 2
+sketches:
+  02_robot_character: "a friendly small robot"
+experiments:
+  S1_control:
+    sweep: {control: [none, scribble, canny]}
+    seeds: [1]
+  S2_window:
+    sweep: {control_window: [[0.0, 1.0], [0.0, 0.5]], preprocess: [raw, clean]}
+    seeds: [1]

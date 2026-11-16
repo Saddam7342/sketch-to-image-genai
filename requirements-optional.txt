@@ -1,0 +1,4 @@
+# Learned edge/line annotators (experiment E1b): PiDiNet soft edges, Lineart
+controlnet-aux==0.0.10
+# Web UI
+gradio>=4.0

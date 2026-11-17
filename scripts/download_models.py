@@ -29,7 +29,7 @@ CORE = [
     ("lllyasviel/control_v11p_sd15_scribble", CN),
     ("latent-consistency/lcm-lora-sdv1-5", ["*.json", "*.safetensors"]),
     ("lllyasviel/control_v11p_sd15_lineart", CN),
-    ("openai/clip-vit-base-patch32", ["*.json", "*.txt", "model.safetensors"]),
+    ("openai/clip-vit-base-patch32", ["*.json", "*.txt", "pytorch_model.bin"]),  # repo has no safetensors
 ]
 EXTRA = [
     ("lllyasviel/control_v11p_sd15_softedge", CN),

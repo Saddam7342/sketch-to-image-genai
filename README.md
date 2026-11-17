@@ -119,14 +119,41 @@ a different drawing ≈ 0.14, blank image 0.
 
 ## Results
 
-*Filled in after the Kaggle run: comparison grids in `results/<exp>/grid.jpg`, plots and tables in
-`results/analysis/`.*
+The full study was run **on a laptop CPU** (Intel i5-7300U, no GPU) with `configs/experiments_cpu.yaml`:
+SD 1.5 + ControlNet, LCM-LoRA 4 steps, guidance 1.0, 512 px. That is 135 images, about 80 s each.
+The report is [`report/report.pdf`](report/report.pdf).
+
+![Showcase](report/figures/fig_showcase.jpg)
+
+| Setting (mean over 5 sketches) | Edge F1 ↑ | Chamfer px ↓ | CLIP ↑ |
+|---|---|---|---|
+| Text only, no ControlNet | 0.13 | 24.4 | 30.8 |
+| ControlNet scribble (default) | 0.85 | 2.9 | 29.0 |
+| ControlNet lineart | 0.93 | 2.5 | 29.3 |
+| ControlNet canny | 0.99 | 1.1 | 27.4 |
+| cond_scale 0.3 / 0.6 / 1.6 | 0.32 / 0.67 / 0.91 | 15.3 / 5.3 / 2.8 | 30.5 / 30.9 / 28.2 |
+| ControlNet only in steps 0–50 % / 50–100 % | 0.76 / 0.17 | 4.8 / 19.9 | 29.6 / 32.4 |
+| Raw (uncleaned) sketch as control | 0.26 | 14.3 | 29.5 |
+| Standard sampler, UniPC 20 steps, CFG 7.5 (~12 min/img) | 0.54 | 4.3 | 31.8 |
+
+Findings:
+- ControlNet is what preserves the sketch.
+- The conditioning scale trades sketch adherence against prompt freedom.
+- The layout is fixed in the early denoising steps.
+- Cleaning the sketch is the single most important step.
+
+Outputs:
+- per-experiment grids: `results/<exp>/grid.jpg`
+- per-image metrics: `results/<exp>/metrics.csv`
+- tables and plots: `results/analysis/`
+- agent demo: `results/agent/`
 
 ## Reproducibility
 
 - Seeds are fixed per run (`torch.Generator("cpu").manual_seed(seed)`); results are reproducible on the same GPU type and library versions (minor differences across GPU models are expected with fp16).
 - Library versions and the GPU are recorded in `results/env.json`.
-- Main settings: SD 1.5, 512×512, UniPC scheduler, 30 steps, CFG 7.5, `cond_scale` 1.0, fp16 on CUDA.
+- Main settings (GPU config): SD 1.5, 512×512, UniPC scheduler, 30 steps, CFG 7.5, `cond_scale` 1.0, fp16 on CUDA.
+- Settings actually run (CPU config): SD 1.5 + LCM-LoRA, 4 steps, guidance 1.0, `cond_scale` 1.0, float32 on CPU. Reproduce with `python scripts/run_experiments.py --config configs/experiments_cpu.yaml --no-safety-checker`, then `scripts/analyze.py`, `scripts/make_figures.py`, `scripts/make_tradeoff.py`, `scripts/agent_demo.py --f1-target 0.85` and `scripts/build_report.py`.
 - Input sketches are regenerated deterministically by `scripts/make_sketches.py`.
 
 ## References and acknowledgements

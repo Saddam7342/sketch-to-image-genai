@@ -9,8 +9,8 @@ defaults:
   style: photoreal
   preprocess: clean
   lcm: true
-  steps: 6
-  guidance_scale: 1.5
+  steps: 4
+  guidance_scale: 1.0   # LCM works best at 1-2; 1.0 disables CFG (2x faster, negative prompt unused)
   cond_scale: 1.0
   control_start: 0.0
   control_end: 1.0
@@ -51,7 +51,7 @@ experiments:
 
   E5_sampler:
     description: "LCM-LoRA step count vs. a standard 20-step UniPC sampler with CFG 7.5."
-    sweep: {steps: [2, 4, 6, 8]}
+    sweep: {steps: [2, 4, 8]}
     seeds: [1]
 
   E5b_standard_sampler:

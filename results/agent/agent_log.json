@@ -1,0 +1,126 @@
+[
+  {
+    "sketch": "03_hover_car",
+    "request": "a watercolor painting of a futuristic hover car",
+    "log": [
+      "style: watercolor",
+      "line density 0.029 -> start with ControlNet 'scribble', cond_scale 0.9",
+      "attempt 1: scribble cond=0.90 -> edge F1 0.833, recall 0.806, CLIP 29.247",
+      "structure too weak -> increase cond_scale",
+      "attempt 2: scribble cond=1.20 -> edge F1 0.906, recall 0.856, CLIP 28.17",
+      "targets met -> stop",
+      "selected attempt 2"
+    ],
+    "attempts": [
+      {
+        "edge_recall": 0.8058,
+        "edge_precision": 0.8631,
+        "edge_f1": 0.8334,
+        "chamfer_s2g": 2.536,
+        "clip_score": 29.247,
+        "seconds": 178.345,
+        "control": "scribble",
+        "cond_scale": 0.9,
+        "prompt": "a watercolor painting of a futuristic hover car, watercolor painting, soft washes, visible paper texture, delicate ink outlines, pastel palette"
+      },
+      {
+        "edge_recall": 0.8562,
+        "edge_precision": 0.962,
+        "edge_f1": 0.906,
+        "chamfer_s2g": 1.957,
+        "clip_score": 28.17,
+        "seconds": 183.853,
+        "control": "scribble",
+        "cond_scale": 1.2,
+        "prompt": "a watercolor painting of a futuristic hover car, watercolor painting, soft washes, visible paper texture, delicate ink outlines, pastel palette"
+      }
+    ]
+  },
+  {
+    "sketch": "04_desk_lamp",
+    "request": "a product render of a modern desk lamp",
+    "log": [
+      "style: blueprint_render",
+      "line density 0.027 -> start with ControlNet 'scribble', cond_scale 0.9",
+      "attempt 1: scribble cond=0.90 -> edge F1 0.815, recall 0.765, CLIP 32.226",
+      "structure too weak -> increase cond_scale",
+      "attempt 2: scribble cond=1.20 -> edge F1 0.799, recall 0.703, CLIP 31.279",
+      "structure too weak -> increase cond_scale",
+      "attempt 3: scribble cond=1.50 -> edge F1 0.847, recall 0.766, CLIP 30.468",
+      "cond_scale already high -> switch ControlNet to 'lineart'",
+      "selected attempt 3"
+    ],
+    "attempts": [
+      {
+        "edge_recall": 0.7651,
+        "edge_precision": 0.8718,
+        "edge_f1": 0.8149,
+        "chamfer_s2g": 5.228,
+        "clip_score": 32.226,
+        "seconds": 166.007,
+        "control": "scribble",
+        "cond_scale": 0.9,
+        "prompt": "a product render of a modern desk lamp, product design render, studio softbox lighting, white background, brushed metal and matte plastic"
+      },
+      {
+        "edge_recall": 0.7031,
+        "edge_precision": 0.9248,
+        "edge_f1": 0.7989,
+        "chamfer_s2g": 4.433,
+        "clip_score": 31.279,
+        "seconds": 164.976,
+        "control": "scribble",
+        "cond_scale": 1.2,
+        "prompt": "a product render of a modern desk lamp, product design render, studio softbox lighting, white background, brushed metal and matte plastic"
+      },
+      {
+        "edge_recall": 0.7656,
+        "edge_precision": 0.9478,
+        "edge_f1": 0.847,
+        "chamfer_s2g": 2.823,
+        "clip_score": 30.468,
+        "seconds": 166.289,
+        "control": "scribble",
+        "cond_scale": 1.5,
+        "prompt": "a product render of a modern desk lamp, product design render, studio softbox lighting, white background, brushed metal and matte plastic"
+      }
+    ]
+  },
+  {
+    "sketch": "05_floating_island",
+    "request": "an epic fantasy floating island with a cabin and a waterfall",
+    "log": [
+      "style: concept_art",
+      "line density 0.038 -> start with ControlNet 'scribble', cond_scale 0.9",
+      "attempt 1: scribble cond=0.90 -> edge F1 0.634, recall 0.765, CLIP 24.711",
+      "structure too weak -> increase cond_scale",
+      "attempt 2: scribble cond=1.20 -> edge F1 0.919, recall 0.872, CLIP 26.678",
+      "targets met -> stop",
+      "selected attempt 2"
+    ],
+    "attempts": [
+      {
+        "edge_recall": 0.7653,
+        "edge_precision": 0.5413,
+        "edge_f1": 0.6341,
+        "chamfer_s2g": 4.999,
+        "clip_score": 24.711,
+        "seconds": 167.848,
+        "control": "scribble",
+        "cond_scale": 0.9,
+        "prompt": "an epic fantasy floating island with a cabin and a waterfall, digital concept art, cinematic lighting, dramatic atmosphere, matte painting, highly detailed"
+      },
+      {
+        "edge_recall": 0.8723,
+        "edge_precision": 0.9716,
+        "edge_f1": 0.9193,
+        "chamfer_s2g": 2.826,
+        "clip_score": 26.678,
+        "seconds": 170.118,
+        "control": "scribble",
+        "cond_scale": 1.2,
+        "prompt": "an epic fantasy floating island with a cabin and a waterfall, digital concept art, cinematic lighting, dramatic atmosphere, matte painting, highly detailed"
+      }
+    ]
+  }
+]

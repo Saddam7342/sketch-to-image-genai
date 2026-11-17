@@ -200,7 +200,8 @@ class SketchGenerator:
     def _set_lcm(self, enabled: bool):
         family = BASES[self._base_name]["family"]
         if enabled and not self._lcm_loaded:
-            self._base_pipe.load_lora_weights(LCM_LORA[family], adapter_name="lcm")
+            self._base_pipe.load_lora_weights(LCM_LORA[family], weight_name="pytorch_lora_weights.safetensors",
+                                              adapter_name="lcm")
             self._lcm_loaded = True
         if self._lcm_loaded:
             # the LoRA lives in the shared U-Net, so toggling it affects all derived pipes

@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bringing Sketches to Life with Generative AI</title>
+<style>
+  @page { size: A4; margin: 13mm 14mm 13mm 14mm; }
+  body { font-family: "Calibri", "Segoe UI", Arial, sans-serif; font-size: 9.3pt; line-height: 1.27; color: #111; margin: 0; }
+  h1 { font-size: 15.5pt; margin: 0 0 2px 0; }
+  .meta { font-size: 9.6pt; margin-bottom: 6px; color: #222; }
+  .meta span { margin-right: 18px; }
+  h2 { font-size: 11pt; margin: 7px 0 3px 0; border-bottom: 1px solid #999; padding-bottom: 1px; }
+  h2, h3 { break-after: avoid; }
+  h3 { font-size: 10pt; margin: 6px 0 2px 0; }
+  p { margin: 0 0 5px 0; text-align: justify; }
+  ul, ol { margin: 0 0 5px 0; padding-left: 17px; }
+  li { margin-bottom: 1px; }
+  figure { margin: 5px 0 7px 0; text-align: center; break-inside: avoid; }
+  figure img { width: 100%; display: block; }
+  figcaption { font-size: 8.3pt; color: #333; margin-top: 2px; text-align: left; }
+  table { border-collapse: collapse; font-size: 8.4pt; margin: 3px 0 6px 0; width: 100%; break-inside: avoid; }
+  th, td { border: 1px solid #bbb; padding: 1.5px 4px; text-align: center; }
+  th { background: #eee; }
+  td:first-child, th:first-child { text-align: left; }
+  .two { display: flex; gap: 10px; align-items: flex-start; }
+  .two > * { flex: 1; }
+  code { font-family: Consolas, monospace; font-size: 8.6pt; }
+  .small { font-size: 8.4pt; text-align: left; }
+  .refs li { font-size: 8.3pt; margin-bottom: 0; }
+  b.best { color: #0a5; }
+</style>
+</head>
+<body>
+
+<h1>Bringing Sketches to Life with Generative AI</h1>
+<div class="meta"><span><b>Student name:</b> Hina Kanwal</span><span><b>Student ID:</b> 32520481</span><span><b>Date:</b> 17 November 2026</span></div>
+<div class="meta"><b>Code repository:</b> <a href="https://github.com/Saddam7342/sketch-to-image-genai">https://github.com/Saddam7342/sketch-to-image-genai</a></div>
+
+<h2>1. Introduction and goal</h2>
+<p>In this assignment I built a system that turns a rough hand-drawn sketch into a detailed, realistic or stylised
+image while keeping the structure of the drawing. A plain text-to-image model only receives a sentence, so it
+invents its own composition. My goal was to make the sketch control <i>where</i> things are (outline, pose,
+proportions) and to let a text prompt control <i>how</i> they look (material, colour, light, style). I used
+Stable Diffusion 1.5 [1] with ControlNet [2] and studied which settings give the best balance between
+faithfulness to the sketch and image quality. I measured this with objective metrics on five sketches and
+135 generated images. As extensions I added a web interface and a small self-correcting agent.</p>
+
+<h2>2. Method</h2>
+<figure>
+<svg viewBox="0 0 760 132" xmlns="http://www.w3.org/2000/svg" font-family="Calibri, Arial" font-size="11">
+  <defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#333"/></marker></defs>
+  <g stroke="#333" fill="none" stroke-width="1.2" marker-end="url(#a)">
+    <path d="M78,30 H100"/><path d="M190,30 H212"/><path d="M302,30 H330"/>
+    <path d="M420,30 H446 V52"/>
+    <path d="M78,100 H100"/><path d="M190,100 H212"/><path d="M302,100 H330"/><path d="M420,100 H440"/>
+    <path d="M560,76 H585"/><path d="M675,76 H692"/>
+    <path d="M630,96 V118 H190 V112" stroke-dasharray="4 3"/>
+  </g>
+  <g stroke="#333" stroke-width="1.1">
+    <rect x="4" y="14" width="74" height="32" rx="4" fill="#f4f4f4"/>
+    <rect x="100" y="14" width="90" height="32" rx="4" fill="#e8f1fb"/>
+    <rect x="212" y="14" width="90" height="32" rx="4" fill="#e8f1fb"/>
+    <rect x="330" y="14" width="90" height="32" rx="4" fill="#fde9d9"/>
+    <rect x="4" y="84" width="74" height="32" rx="4" fill="#f4f4f4"/>
+    <rect x="100" y="84" width="90" height="32" rx="4" fill="#fde9d9"/>
+    <rect x="212" y="84" width="90" height="32" rx="4" fill="#fde9d9"/>
+    <rect x="330" y="84" width="90" height="32" rx="4" fill="#fde9d9"/>
+    <rect x="440" y="52" width="120" height="56" rx="4" fill="#fde9d9"/>
+    <rect x="585" y="56" width="90" height="40" rx="4" fill="#e3f4e3"/>
+    <rect x="692" y="56" width="64" height="40" rx="4" fill="#f4f4f4"/>
+  </g>
+  <g text-anchor="middle" fill="#111">
+    <text x="41" y="28">sketch</text><text x="41" y="40">(scan/photo)</text>
+    <text x="145" y="28">preprocess</text><text x="145" y="40">clean + crop</text>
+    <text x="257" y="28">control map</text><text x="257" y="40">scribble/lineart…</text>
+    <text x="375" y="28">ControlNet</text><text x="375" y="40">(encoder copy)</text>
+    <text x="41" y="98">text prompt</text><text x="41" y="110">+ style</text>
+    <text x="145" y="98">CLIP text</text><text x="145" y="110">encoder</text>
+    <text x="257" y="98">noise latent</text><text x="257" y="110">64×64×4</text>
+    <text x="375" y="98">scheduler</text><text x="375" y="110">LCM / UniPC</text>
+    <text x="500" y="68">U-Net denoiser</text><text x="500" y="81">+ ControlNet residuals</text><text x="500" y="94">(× N steps)</text>
+    <text x="630" y="73">VAE decoder</text><text x="630" y="86">512×512</text>
+    <text x="724" y="73">image</text><text x="724" y="86">+ metrics</text>
+    <text x="410" y="128" font-size="10" fill="#555">agent: if the metrics are weak → change ControlNet type / strength and retry</text>
+  </g>
+</svg>
+<figcaption><b>Figure 1.</b> Pipeline. Blue: my preprocessing. Orange: pretrained models. Green: decoding. Dashed: the agent's feedback loop.</figcaption>
+</figure>
+
+<p><b>Diffusion model.</b> Stable Diffusion is a latent diffusion model [1]. A VAE compresses a 512×512 image into a
+64×64×4 latent. Generation starts from Gaussian noise in this latent space, and a U-Net predicts and removes the
+noise step by step [3, 5]. The prompt enters the U-Net through cross-attention on CLIP text embeddings [10].
+With classifier-free guidance [4] the noise prediction is <code>ε = ε<sub>uncond</sub> + w·(ε<sub>text</sub> − ε<sub>uncond</sub>)</code>,
+where <i>w</i> is the guidance scale.</p>
+
+<p><b>ControlNet.</b> ControlNet [2] is a trainable copy of the U-Net encoder that receives a control image (here: my
+sketch). Its features pass through zero-initialised 1×1 convolutions and are <i>added</i> to the skip connections of the
+frozen U-Net. Because of the zero initialisation, an untrained ControlNet changes nothing. My smoke test with random
+weights confirmed this (identical outputs with and without the sketch). The added signal is multiplied by the
+<i>conditioning scale</i>, and it can be switched on only for part of the denoising steps (<i>control window</i>). I used the
+pretrained ControlNet v1.1 models for <i>scribble, lineart, soft edge</i> and <i>canny</i>; I did not train a network.</p>
+
+<p><b>Sketch preprocessing</b> (my own, <code>preprocess.py</code>). Phone photos of paper have shadows, grey paper and noise.
+I divide the image by a large median blur to flatten the lighting, apply an adaptive threshold, remove connected
+components smaller than 30 px, crop to the drawing with a 6% margin, pad to a square and resize to 512 px. From this
+clean line mask I build the control map in the form each ControlNet expects (white lines on black): thickened lines for
+scribble, thin lines for lineart, blurred lines for soft edge and Canny edges for canny.</p>
+
+<p><b>Prompts.</b> Each sketch has a short subject description. A style module adds a style suffix (photoreal, concept
+art, watercolor, clay, cyberpunk) and a negative prompt. All prompts stay below CLIP's 77-token limit.</p>
+
+<p><b>Evaluation metrics</b> (<code>metrics.py</code>). To measure <i>sketch preservation</i> I skeletonise the clean sketch to 1-px
+centre lines and detect edges in the generated image (bilateral filter + Canny [12]). With distance transforms I compute
+<b>edge recall</b> (share of sketch pixels that have a generated edge within 3 px), <b>edge precision</b>, their <b>F1</b>, and the
+<b>Chamfer distance</b> from sketch to image in pixels. For <i>prompt alignment</i> I use the <b>CLIP score</b> [11]
+(100·cosine similarity of image and prompt, ViT-B/32). I validated the edge metric before use: the sketch against
+itself gives 1.0, a 4-px shift still gives recall 0.999, a 15-px shift 0.53, an unrelated drawing 0.14, a blank image 0,
+and random noise 0.49 recall but only 0.14 precision. This is why I report F1 and not recall alone.
+I dropped an edge-SSIM metric because a blank image scored 0.75.</p>
+
+<h2>3. Experimental setup and reproducibility</h2>
+<p><b>Hardware constraint.</b> I had no GPU, only a laptop CPU (Intel Core i5-7300U, 4 threads, 16 GB RAM). A standard
+20-step sampler with guidance took about 12 minutes per image. I therefore used <b>LCM-LoRA</b> [8, 9], a small set of low-rank
+weights distilled so that SD 1.5 can produce an image in 2–8 steps without classifier-free guidance (w = 1). My default
+configuration is: SD 1.5, ControlNet scribble, conditioning scale 1.0, control window 0–1, LCM-LoRA with 4 steps,
+guidance 1.0, 512×512, seed 1, cleaned sketch, photoreal style. This takes about 80 s per image. One study (E5b)
+uses the standard UniPC sampler [6] with 20 steps and guidance 7.5 as a quality reference.</p>
+<p><b>Inputs.</b> Five sketches (tower, robot, hover car, desk lamp, floating island), drawn as pencil-style line drawings on
+textured paper with uneven lighting (<code>sketches/</code>). <b>Experiments:</b> E1 control type (incl. a text-only baseline
+without ControlNet), E2 conditioning scale, E3 control window, E4 style, E5 LCM step count, E5b standard sampler, E7 seeds,
+E8 raw vs. cleaned sketch; 135 images in total. One factor is changed at a time from the default.</p>
+<p class="small"><b>Reproducibility.</b> Python 3.14, PyTorch 2.12 (CPU, float32), diffusers 0.43.0, transformers 5.23.0, peft 0.21.3.
+Models: <code>stable-diffusion-v1-5</code>, <code>lllyasviel/control_v11p_sd15_{scribble,lineart,softedge,canny}</code>,
+<code>latent-consistency/lcm-lora-sdv1-5</code>, <code>openai/clip-vit-base-patch32</code>. All settings are in
+<code>configs/experiments_cpu.yaml</code>; seeds are fixed (<code>torch.Generator</code>). Re-run with
+<code>python scripts/run_experiments.py --config configs/experiments_cpu.yaml</code>, then <code>scripts/analyze.py</code> and
+<code>scripts/make_figures.py</code>. Exact package versions are saved in <code>results/env.json</code>, and every image has a row in
+<code>results/&lt;experiment&gt;/metrics.csv</code>. A GPU configuration with SDXL [7] and more seeds is included
+(<code>configs/experiments.yaml</code>, Kaggle notebook) but was not run.</p>
+
+<h2>4. Results</h2>
+<figure>
+<img src="figures/fig_showcase.jpg" alt="Showcase" style="width:86%;margin:auto">
+<figcaption><b>Figure 2.</b> All five input sketches, the scribble control map and the results for five styles (default settings, seed 1).
+Every result keeps the outline, the pose and the proportions of the drawing, while the prompt changes material, colour and light.</figcaption>
+</figure>
+
+<h3>E1: Control representation</h3>
+<div class="two">
+<div>
+<table>
+<tr><th>Control</th><th>Recall</th><th>F1</th><th>Chamfer (px)</th><th>CLIP</th></tr>
+<tr><td>none (text only)</td><td>0.24</td><td>0.13</td><td>24.4</td><td><b>30.8</b></td></tr>
+<tr><td>scribble</td><td>0.85</td><td>0.85</td><td>2.9</td><td>29.0</td></tr>
+<tr><td>lineart</td><td>0.89</td><td>0.93</td><td>2.5</td><td>29.3</td></tr>
+<tr><td>soft edge</td><td>0.71</td><td>0.72</td><td>5.2</td><td>29.5</td></tr>
+<tr><td>canny</td><td><b>0.99</b></td><td><b>0.99</b></td><td><b>1.1</b></td><td>27.4</td></tr>
+</table>
+<p class="small">Table 1. Mean over the 5 sketches.</p>
+</div>
+<div>
+<p>Without ControlNet the model ignores the drawing (F1 0.13). It draws a generic robot or a real waterfall
+(Fig. 3). All four ControlNets raise F1 to 0.72–0.99. <b>Canny</b> scores highest, but visually it copies the pencil strokes
+as dark outlines, and it has the lowest CLIP score. <b>Lineart</b> gives the best balance: F1 0.93 with a natural look.
+Soft edge allows the most freedom but loses thin parts, such as the hover-car spoiler (F1 0.34).</p>
+</div>
+</div>
+<figure>
+<img src="figures/fig_control_type.jpg" alt="Control type comparison" style="width:90%;margin:auto">
+<figcaption><b>Figure 3.</b> Same sketch and prompt with no ControlNet and with four control representations.</figcaption>
+</figure>
+
+<h3>E2/E3: How strongly and when the sketch is applied</h3>
+<figure>
+<img src="figures/fig_cond_scale.jpg" alt="Conditioning scale">
+<figcaption><b>Figure 4.</b> Conditioning scale from 0.3 to 1.6. At 0.3 the hover car becomes a flat disc; from 1.0 the result follows the drawing closely.</figcaption>
+</figure>
+<div class="two">
+<div>
+<table>
+<tr><th>Setting</th><th>F1</th><th>Chamfer</th><th>CLIP</th></tr>
+<tr><td>scale 0.3</td><td>0.32</td><td>15.3</td><td>30.5</td></tr>
+<tr><td>scale 0.6</td><td>0.67</td><td>5.3</td><td><b>30.9</b></td></tr>
+<tr><td>scale 1.0</td><td>0.85</td><td>2.9</td><td>29.0</td></tr>
+<tr><td>scale 1.3</td><td>0.90</td><td>2.7</td><td>28.5</td></tr>
+<tr><td>scale 1.6</td><td><b>0.91</b></td><td>2.8</td><td>28.2</td></tr>
+<tr><td>window 0–0.5</td><td>0.76</td><td>4.8</td><td>29.6</td></tr>
+<tr><td>window 0.5–1</td><td>0.17</td><td>19.9</td><td>32.4</td></tr>
+</table>
+<p class="small">Table 2. E2 and E3 (window = fraction of steps with ControlNet active, scale 1.0).</p>
+</div>
+<div>
+<p>The conditioning scale shows a clear <b>trade-off</b>. F1 rises steeply up to 1.0 and then saturates (0.85 → 0.91),
+while the CLIP score falls from 30.9 to 28.2: the stronger the sketch, the less freedom the model has to follow the text.
+I found 0.6–1.0 to be the useful range.</p>
+<p>The control window shows <i>when</i> the sketch matters. Applying ControlNet only in the first half of the steps keeps most of
+the structure (F1 0.76), while applying it only in the second half has almost no effect (0.17). The layout of the image is
+decided in the early, high-noise steps. Releasing the control early is a cheap way to give the model more freedom for
+texture and detail.</p>
+</div>
+</div>
+
+<h3>E4, E5, E7, E8: Style, sampler, seeds and preprocessing</h3>
+<div class="two">
+<div>
+<figure style="margin-top:0">
+<img src="figures/fig_tradeoff.png" alt="Trade-off">
+<figcaption><b>Figure 5.</b> Sketch preservation vs. prompt alignment for every configuration (means over 5 sketches).</figcaption>
+</figure>
+</div>
+<div>
+<table>
+<tr><th>Setting</th><th>F1</th><th>CLIP</th><th>s / img</th></tr>
+<tr><td>LCM 2 steps</td><td>0.84</td><td>29.7</td><td><b>45</b></td></tr>
+<tr><td>LCM 4 steps</td><td><b>0.85</b></td><td>29.0</td><td>79</td></tr>
+<tr><td>LCM 8 steps</td><td>0.75</td><td>28.3</td><td>121</td></tr>
+<tr><td>UniPC 20, CFG 7.5</td><td>0.54</td><td><b>31.8</b></td><td>724</td></tr>
+<tr><td>raw sketch</td><td>0.26</td><td>29.5</td><td>–</td></tr>
+<tr><td>cleaned sketch</td><td><b>0.85</b></td><td>29.0</td><td>–</td></tr>
+<tr><td>seeds 1 / 2 / 3</td><td colspan="2">F1 0.85 / 0.82 / 0.77</td><td>–</td></tr>
+</table>
+<p class="small">Table 3. Median CPU time per image.</p>
+</div>
+</div>
+<p><b>Style (E4).</b> The style prompt changes the look strongly but the structure very little. F1 stays between 0.78 and 0.88 for
+all five styles (Fig. 2). The exception is <i>cyberpunk</i> on the hover car (F1 0.46): recall stayed at 0.94, but neon reflections and
+streaks created many extra edges (precision 0.31). <b>Sampler (E5).</b> With LCM, 2 and 4 steps preserve the sketch equally well, and 4 steps
+give cleaner surfaces. 8 steps did not help. On the hover car F1 fell to 0.34, but recall stayed at 0.96: the shape was kept, and a detailed
+water texture added many extra edges (precision 0.21). The same happened with cyberpunk. This shows why F1 must be read
+together with recall and the images. The standard 20-step
+sampler with guidance 7.5 gives the most realistic images and the highest CLIP score: real sky, clouds and glass reflections (Fig. 6).
+The strong text guidance also pulls the image away from the drawing (F1 0.54), and each image is 9× slower on my CPU. <b>Seeds (E7).</b>
+Different seeds change colours and materials, but the shape stays the same; mean F1 varied by 0.08 over three seeds, so
+differences smaller than this between settings should not be over-interpreted. <b>Preprocessing (E8)</b> had the <b>largest single
+effect</b> of all experiments: using the raw photo of the sketch as control lowers F1 from 0.85 to 0.26. The grey paper texture
+and shadows become false "lines", so the model builds a different object (Fig. 6, bottom: a mountain appears and the cabin and waterfall are lost).</p>
+<figure>
+<img src="figures/fig_ablations.jpg" alt="Ablations" style="width:76%;margin:auto">
+<figcaption><b>Figure 6.</b> Top: LCM steps vs. standard sampler. Bottom: raw vs. cleaned sketch as control input.</figcaption>
+</figure>
+
+<h2>5. Extensions: web interface and agent</h2>
+<div class="two">
+<figure style="margin-top:0; flex:1.25">
+<img src="../results/agent/agent_attempts.jpg" alt="Agent attempts">
+<figcaption><b>Figure 7.</b> Agent runs with a free-text request (target edge F1 ≥ 0.85). Every attempt is shown; the agent keeps the best one.</figcaption>
+</figure>
+<div>
+<p><b>Web interface</b> (<code>app/gradio_app.py</code>). A Gradio app where a user uploads or draws a sketch, types what it is,
+and chooses style, ControlNet type, conditioning scale, control window, steps and seed. It shows the control map, the result
+and the edge metrics, so a user can see how faithful the image is.</p>
+<p><b>Self-correcting agent</b> (<code>agent.py</code>). The agent turns a free-text request into settings and checks its own
+output. It (1) detects the style from keywords (e.g. "watercolor", "product render"), (2) picks the ControlNet type from the
+line density of the sketch and starts at scale 0.9, (3) generates, (4) measures edge F1 and CLIP, and (5) if the structure is
+too weak it raises the scale by 0.3 or switches to lineart; if the image ignores the prompt it lowers the scale. It stops at the
+target or after 3 attempts and keeps the best image. Every decision is written to a log.</p>
+<p>In my demo (Fig. 7) the agent improved F1 on all three sketches: hover car 0.83 → 0.91, desk lamp 0.81 → 0.85 and floating
+island 0.63 → 0.92, the last one in a single correction. Each retry also uses a new seed, so part of the gain comes from seed
+variation. For the car and the lamp the CLIP score fell by 1–2 points as the scale went up, as E2 predicts.</p>
+</div>
+</div>
+
+<h2>6. Discussion and limitations</h2>
+<ul>
+<li><b>Best setting.</b> For faithful but natural results I recommend lineart or scribble ControlNet with scale 0.8–1.0, active for the
+whole trajectory (or 0–0.7 for more freedom), on a <i>cleaned</i> sketch. Preprocessing matters more than any model setting.</li>
+<li><b>Metric limits.</b> Edge F1 rewards tracing. It cannot judge realism, and it gives canny the top score although its images look
+drawn. CLIP measures prompt alignment, not beauty. Both are proxies, so I always inspected the images as well.</li>
+<li><b>Compute.</b> Because of the CPU I used LCM-LoRA, 512 px and mostly one seed. The few-step images are less detailed than
+standard sampling, and with heavy conditioning some (e.g. the tower) keep visible pencil grid lines.</li>
+<li><b>Artifacts.</b> The standard-sampler tower image contains a fake watermark in the corner, a known SD 1.5 artifact
+learned from web images. I disabled the safety checker for speed; all prompts are harmless.</li>
+<li><b>Sketches.</b> My test sketches are clean line drawings. Very messy sketches, perspective errors or shading would be
+harder; the agent is a first step towards handling such cases automatically.</li>
+</ul>
+
+<h2>7. Conclusion</h2>
+<p>I built a complete sketch-to-image pipeline from pretrained Stable Diffusion 1.5 and ControlNet, with my own preprocessing,
+evaluation metrics, experiment framework, web interface and agent. The experiments show that ControlNet raises sketch
+preservation from F1 0.13 (text only) to 0.85–0.93 at a small cost in CLIP score (30.8 → 29.0), and that the main
+trade-off is between conditioning strength and text freedom. Cleaning the sketch was the most important step.</p>
+
+<h2>References</h2>
+<ol class="refs">
+<li>R. Rombach et al. High-Resolution Image Synthesis with Latent Diffusion Models. CVPR 2022.</li>
+<li>L. Zhang, A. Rao, M. Agrawala. Adding Conditional Control to Text-to-Image Diffusion Models. ICCV 2023.</li>
+<li>J. Ho, A. Jain, P. Abbeel. Denoising Diffusion Probabilistic Models. NeurIPS 2020.</li>
+<li>J. Ho, T. Salimans. Classifier-Free Diffusion Guidance. NeurIPS Workshop 2021.</li>
+<li>J. Song, C. Meng, S. Ermon. Denoising Diffusion Implicit Models. ICLR 2021.</li>
+<li>W. Zhao et al. UniPC: A Unified Predictor-Corrector Framework for Fast Sampling of Diffusion Models. NeurIPS 2023.</li>
+<li>D. Podell et al. SDXL: Improving Latent Diffusion Models for High-Resolution Image Synthesis. ICLR 2024.</li>
+<li>S. Luo et al. LCM-LoRA: A Universal Stable-Diffusion Acceleration Module. arXiv:2311.05556, 2023.</li>
+<li>E. J. Hu et al. LoRA: Low-Rank Adaptation of Large Language Models. ICLR 2022.</li>
+<li>A. Radford et al. Learning Transferable Visual Models From Natural Language Supervision. ICML 2021.</li>
+<li>J. Hessel et al. CLIPScore: A Reference-free Evaluation Metric for Image Captioning. EMNLP 2021.</li>
+<li>J. Canny. A Computational Approach to Edge Detection. IEEE TPAMI, 1986.</li>
+<li>Software: PyTorch, Hugging Face Diffusers / Transformers / PEFT, OpenCV, scikit-image, Gradio. Model licences are listed in <code>REFERENCES.md</code>.</li>
+</ol>
+<p class="small"><b>AI assistance.</b> I used an AI coding assistant (Claude, Anthropic) to help write parts of the code and documentation.
+I reviewed and ran all experiments myself and checked the results and conclusions.</p>
+
+</body>
+</html>

@@ -14,3 +14,6 @@ results/E*/*/
 # local / not part of the submission
 description.txt
 *.egg-info/
+results_run.log
+results/_backup_run1/
+results/agent_run.log

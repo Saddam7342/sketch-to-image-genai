@@ -78,8 +78,8 @@ with gr.Blocks(title="Sketch to Image") as demo:
                     end = gr.Slider(0, 1, 1.0, step=0.05, label="Control end")
                 fast = gr.Checkbox(GEN.device == "cpu", label="Fast (LCM-LoRA, few steps)")
                 with gr.Row():
-                    steps = gr.Slider(2, 50, 6 if GEN.device == "cpu" else 30, step=1, label="Steps")
-                    guidance = gr.Slider(1.0, 15.0, 1.5 if GEN.device == "cpu" else 7.5, step=0.5, label="Guidance")
+                    steps = gr.Slider(2, 50, 4 if GEN.device == "cpu" else 30, step=1, label="Steps")
+                    guidance = gr.Slider(1.0, 15.0, 1.0 if GEN.device == "cpu" else 7.5, step=0.5, label="Guidance")
                     seed = gr.Number(1, label="Seed", precision=0)
                 btn = gr.Button("Generate", variant="primary")
             with gr.Column():
